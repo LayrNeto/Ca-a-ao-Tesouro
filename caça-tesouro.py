@@ -146,25 +146,122 @@ def busca_custo_uniforme(grid, pos_inicial, pos_tesouro):
 
 
 def busca_gulosa(grid, pos_inicial, pos_tesouro):
-    pass
+    visitados = set()
+    fila = []  
+    caminho = {} 
+
+    def heuristica(pos):
+        return abs(pos[0] - pos_tesouro[0]) + abs(pos[1] - pos_tesouro[1])
+    
+    heapq.heappush(fila, (heuristica(pos_inicial), pos_inicial))
+    caminho[pos_inicial] = None  
+
+    linhas = len(grid)
+    colunas = len(grid[0])
+
+    direcoes = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+
+    while fila:
+        _, pos_atual = heapq.heappop(fila)
+        x_atual, y_atual = pos_atual
+
+
+        if pos_atual == pos_tesouro:
+            caminho_encontrado = []
+            while pos_atual is not None:
+                caminho_encontrado.append(pos_atual)
+                pos_atual = caminho[pos_atual]
+            caminho_encontrado.reverse()
+            return caminho_encontrado
+
+        if pos_atual in visitados:
+            continue
+
+        visitados.add(pos_atual)
+
+        for x, y in direcoes:
+            x_adjacente, y_adjacente = x_atual + x, y_atual + y
+
+            # Se o nó adjacente está dentro do escopo de valores e ainda não foi visitado
+            if (0 <= x_adjacente < linhas) and (0 <= y_adjacente < colunas) and ((x_adjacente, y_adjacente) not in visitados):
+                if grid[x_adjacente][y_adjacente] != '#':
+                    pos_adjacente = (x_adjacente, y_adjacente)                        
+                    heapq.heappush(fila, (heuristica(pos_adjacente), pos_adjacente))
+                   
+                    if pos_adjacente not in caminho:
+                        caminho[pos_adjacente] = pos_atual
+
+    return []   
+        
 
 
 def busca_a_estrela(grid, pos_inicial, pos_tesouro):
-    pass
+    visitados = set()
+    fila = []  
+    caminho = {} 
+
+    def manhattan(pos):
+        return abs(pos[0] - pos_tesouro[0]) + abs(pos[1] - pos_tesouro[1])
+    
+    heapq.heappush(fila, (manhattan(pos_inicial), 0, pos_inicial))
+    caminho[pos_inicial] = (0, None)
+
+    linhas = len(grid)
+    colunas = len(grid[0])
+
+    direcoes = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+
+    while fila:
+        _, custo_acumulado, pos_atual = heapq.heappop(fila)
+        x_atual, y_atual = pos_atual
+
+
+        if pos_atual == pos_tesouro:
+            caminho_encontrado = []
+            while pos_atual is not None:
+                caminho_encontrado.append(pos_atual)
+                pos_atual = caminho[pos_atual][1]
+            caminho_encontrado.reverse()
+            return caminho_encontrado
+
+        if pos_atual in visitados:
+            continue
+
+        visitados.add(pos_atual)
+
+        for x, y in direcoes:
+            x_adjacente, y_adjacente = x_atual + x, y_atual + y
+
+            if (0 <= x_adjacente < linhas) and (0 <= y_adjacente < colunas):
+                if grid[x_adjacente][y_adjacente] != '#':
+                    if grid[x_adjacente][y_adjacente] == 'L':
+                        custo_novo = custo_acumulado + 5  
+                    else: 
+                        custo_novo = custo_acumulado + 1 
+
+                    pos_adjacente = (x_adjacente, y_adjacente)                        
+                    heuristica_adjacente = manhattan(pos_adjacente)
+
+                    total = heuristica_adjacente + custo_acumulado
+
+                    if pos_adjacente not in caminho or custo_novo < caminho[pos_adjacente][0]:
+                        caminho[pos_adjacente] = (custo_novo, pos_atual)
+                        heapq.heappush(fila, (total, custo_novo, pos_adjacente))
+    
+    return []   
 
 
 def main():
     mapa = [
-        ['I', '.', '#', '.', '.', '.', '.', '.', '.', '.'],
-        ['#', '.', '#', '#', '.', '#', '#', '.', '#', '.'],
-        ['.', '.', '.', '.', '.', '.', '#', '.', '.', '.'],
-        ['#', '.', '#', '.', '#', '.', '.', '.', '#', '.'],
-        ['.', '.', '#', '.', '.', '#', '#', '.', '#', '.'],
-        ['.', '#', '.', '.', '.', '.', '#', '.', '#', '.'],
-        ['.', '.', '.', '#', '.', '.', '.', '.', '#', 'T'],
-        ['.', '#', '#', '.', '#', '#', '.', '#', '#', '.'],
-        ['.', '.', '.', '.', '.', '.', '.', '.', '#', '.'],
-        ['.', '.', '#', '.', '#', '.', '#', '.', '.', '.'],
+        ['I', '#', '.', '#', 'L', 'L', 'T'],
+    ['.', '#', '.', '#', 'L', '#', '.'],
+    ['.', '#', '.', '#', 'L', '#', '.'],
+    ['.', '#', '.', '.', '.', '#', '.'],
+    ['.', '#', '.', '#', '.', '#', '.'],
+    ['.', '#', '.', '#', '.', '#', '.'],
+    ['.', '.', '.', '#', '.', '.', '.'],
     ]
     
     posicao_inicial = tuple(map(int, input("Digite a posição inicial (X Y): ").split()))
@@ -175,8 +272,8 @@ def main():
     caminho_a_estrela = busca_a_estrela(mapa, posicao_inicial, posicao_tesouro)
 
     print_caminho(mapa, caminho_bcu, "Custo uniforme")
-    #print_caminho(mapa, caminho_gulosa, "Gulosa")
-    #print_caminho(mapa, caminho_a_estrela, "A*")
+    print_caminho(mapa, caminho_gulosa, "Gulosa")
+    print_caminho(mapa, caminho_a_estrela, "A*")
   
 main()
 
